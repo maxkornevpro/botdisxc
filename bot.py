@@ -6,9 +6,8 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-# !!! ВАЖНО: Хранить токен в коде небезопасно. Лучше использовать переменные окружения.
-# Если вы выложите этот файл в открытый доступ, ваш токен украдут.
-DISCORD_TOKEN = "MTQ1NTY0MzUyNDk2Mjk3NTg2MA.GuIwel.xjmA7NMsYtdU6TkUrYRBqGnqwnfrdOu93OMOL8"
+
+DISCORD_TOKEN = "MTQ1NTY0MzUyNDk2Mjk3NTg2MA.GDxr4K.o6DGAWBsraP6vbexHhmwO1KVYxPKpgGAJDtltk"
 PREFIX = os.getenv("BOT_PREFIX", "!")
 
 API_BASE_URL = os.getenv("API_BASE_URL")
@@ -94,4 +93,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
