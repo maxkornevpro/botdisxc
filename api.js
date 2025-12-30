@@ -26,6 +26,8 @@ let clientStats = {
   lastStopAt: null
 };
 
+const uniqueUsers = new Set();
+
 const clientSessions = new Map();
 
 function loadData() {
@@ -43,6 +45,15 @@ function loadData() {
         lastStopAt: cs.lastStopAt ?? null
       };
     }
+
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.uniqueUsers)) {
+      uniqueUsers.clear();
+      for (const u of parsed.uniqueUsers) {
+        if (typeof u === 'string' && u.trim().length > 0) {
+          uniqueUsers.add(u.trim());
+        }
+      }
+    }
   } catch {
   }
 }
@@ -51,6 +62,7 @@ function saveData() {
   ensureDataDir();
   const payload = {
     clientStats,
+    uniqueUsers: Array.from(uniqueUsers.values()),
     savedAt: nowMs()
   };
   const tmp = STATS_FILE + '.tmp';
@@ -112,6 +124,10 @@ app.post('/api/client/start', (req, res) => {
 
   clientStats.totalStarts = Number(clientStats.totalStarts || 0) + 1;
   clientStats.lastStartAt = now;
+
+  if (username && username.trim().length > 0) {
+    uniqueUsers.add(username.trim());
+  }
   saveData();
 
   res.json({ success: true, sessionId, online: onlineCount(), totalStarts: clientStats.totalStarts });
@@ -158,7 +174,10 @@ app.get('/api/client/stats', (req, res) => {
     success: true,
     online: clientSessions.size,
     ttlMs: TTL_MS,
-    stats: clientStats
+    stats: {
+      ...clientStats,
+      uniqueUsers: uniqueUsers.size
+    }
   });
 });
 

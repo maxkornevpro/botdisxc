@@ -6,14 +6,16 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+# !!! ВАЖНО: Хранить токен в коде небезопасно. Лучше использовать переменные окружения.
+# Если вы выложите этот файл в открытый доступ, ваш токен украдут.
+DISCORD_TOKEN = "MTQ1NTY0MzUyNDk2Mjk3NTg2MA.GvJzjl.xK0dz2-ZV5pmBHbRI0sQLFhZWvzyM4QNoFprxI"
 PREFIX = os.getenv("BOT_PREFIX", "!")
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 CLIENT_STATS_URL = os.getenv("CLIENT_STATS_URL")
 
-if not DISCORD_TOKEN:
-    raise SystemExit("Missing DISCORD_TOKEN env var")
+if not DISCORD_TOKEN or DISCORD_TOKEN == "YOUR_TOKEN_HERE":
+    raise SystemExit("Missing or placeholder DISCORD_TOKEN. Please replace 'YOUR_TOKEN_HERE' with your actual token.")
 
 
 def _resolve_stats_url() -> str:
@@ -62,22 +64,13 @@ async def _reply_stats(ctx: commands.Context):
     async with aiohttp.ClientSession() as session:
         data = await fetch_stats(session)
         online = data.get("online", 0)
-        ttl_ms = data.get("ttlMs", 0) or 0
-        ttl_sec = round(ttl_ms / 1000)
-
         stats = data.get("stats") or {}
-        total_starts = stats.get("totalStarts", 0)
-        total_stops = stats.get("totalStops", 0)
-        last_start_at = _format_ts_ms(stats.get("lastStartAt"))
-        last_stop_at = _format_ts_ms(stats.get("lastStopAt"))
+        unique_users = stats.get("uniqueUsers", 0)
 
         await ctx.reply(
-            "AeroProject client stats\n"
-            f"Online clients: {online} (ttl {ttl_sec}s)\n"
-            f"Total starts: {total_starts}\n"
-            f"Total stops: {total_stops}\n"
-            f"Last start: {last_start_at}\n"
-            f"Last stop: {last_stop_at}"
+            "AeroProject\n"
+            f"Всего пользователей запустивших клиент: {unique_users}\n"
+            f"Онлайн сейчас: {online}"
         )
 
 
