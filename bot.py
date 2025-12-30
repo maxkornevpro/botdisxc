@@ -6,15 +6,29 @@ import aiohttp
 import discord
 from discord.ext import commands
 
+TOKEN_FILE = os.getenv("DISCORD_TOKEN_FILE")
+if not TOKEN_FILE:
+    TOKEN_FILE = os.path.join(os.path.dirname(__file__), "token.txt")
 
-DISCORD_TOKEN = "MTQ1NTY0MzUyNDk2Mjk3NTg2MA.GDxr4K.o6DGAWBsraP6vbexHhmwO1KVYxPKpgGAJDtltk"
+TOKEN_API_URL = os.getenv("DISCORD_TOKEN_API_URL")
+
+
+def _read_token_from_file(path: str) -> str:
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                token = line.strip()
+                if token:
+                    return token
+    except Exception as e:
+        raise SystemExit(f"Failed to read token file '{path}': {e}")
+    raise SystemExit(f"Token file '{path}' is empty")
+
+
 PREFIX = os.getenv("BOT_PREFIX", "!")
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 CLIENT_STATS_URL = os.getenv("CLIENT_STATS_URL")
-
-if not DISCORD_TOKEN or DISCORD_TOKEN == "YOUR_TOKEN_HERE":
-    raise SystemExit("Missing or placeholder DISCORD_TOKEN. Please replace 'YOUR_TOKEN_HERE' with your actual token.")
 
 
 def _resolve_stats_url() -> str:
@@ -26,6 +40,24 @@ def _resolve_stats_url() -> str:
 
 
 STATS_URL = _resolve_stats_url()
+
+
+async def _read_token_from_api() -> str:
+    if not TOKEN_API_URL:
+        raise RuntimeError("DISCORD_TOKEN_API_URL is not set")
+
+    headers = {}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(TOKEN_API_URL) as resp:
+            if resp.status != 200:
+                text = await resp.text()
+                raise RuntimeError(f"Token API HTTP {resp.status}: {text}")
+            data = await resp.json()
+            token = (data.get("token") if isinstance(data, dict) else None)
+            if not token or not isinstance(token, str):
+                raise RuntimeError("Token API response does not contain 'token'")
+            return token.strip()
 
 
 def _format_ts_ms(ts_ms):
@@ -87,11 +119,15 @@ async def online_cmd(ctx: commands.Context):
 
 
 async def main():
+    token = None
+    if TOKEN_API_URL:
+        token = await _read_token_from_api()
+    else:
+        token = _read_token_from_file(TOKEN_FILE)
+
     async with bot:
-        await bot.start(DISCORD_TOKEN)
+        await bot.start(token)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
