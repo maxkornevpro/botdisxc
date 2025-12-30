@@ -11,6 +11,8 @@ if not TOKEN_FILE:
     TOKEN_FILE = os.path.join(os.path.dirname(__file__), "token.txt")
 
 TOKEN_API_URL = os.getenv("DISCORD_TOKEN_API_URL")
+if not TOKEN_API_URL:
+    TOKEN_API_URL = "https://botdisxc.onrender.com/api/bot/token"
 
 
 def _read_token_from_file(path: str) -> str:
@@ -120,9 +122,14 @@ async def online_cmd(ctx: commands.Context):
 
 async def main():
     token = None
-    if TOKEN_API_URL:
+    try:
         token = await _read_token_from_api()
-    else:
+    except Exception as e:
+        if not os.path.exists(TOKEN_FILE):
+            raise SystemExit(
+                f"Failed to get token from API ({TOKEN_API_URL}): {e}. "
+                f"Also token file not found: {TOKEN_FILE}"
+            )
         token = _read_token_from_file(TOKEN_FILE)
 
     async with bot:
